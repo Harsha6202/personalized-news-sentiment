@@ -1,16 +1,33 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import Logo from '@/components/ui-components/Logo';
 import { toast } from '@/hooks/use-toast';
 import FadeInSection from '@/components/ui-components/FadeInSection';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const { authState, login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // If already authenticated and email verified, redirect to intended destination
+    if (authState.isAuthenticated && authState.user?.isEmailVerified) {
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    }
+    
+    // If authenticated but email not verified, redirect to verification page
+    if (authState.isAuthenticated && !authState.user?.isEmailVerified) {
+      navigate('/verify-email', { replace: true });
+    }
+  }, [authState, navigate, location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,29 +41,12 @@ const Login = () => {
       return;
     }
     
-    setIsLoading(true);
-    
-    // Simulate API call
     try {
-      // This would be a real authentication call in a production app
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo purposes, we'll just show a success message
-      toast({
-        title: "Success",
-        description: "You have been logged in successfully.",
-      });
-      
-      // Redirect to dashboard (in a real app we'd update auth state too)
-      window.location.href = '/dashboard';
+      await login({ email, password });
+      // Redirect is handled in the useEffect hook
     } catch (error) {
-      toast({
-        title: "Authentication Failed",
-        description: "Invalid email or password. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      // Error handling is done in the login function
+      console.error('Login submission error:', error);
     }
   };
 
@@ -132,10 +132,10 @@ const Login = () => {
             <div>
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={authState.loading}
                 className="flex w-full justify-center items-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? (
+                {authState.loading ? (
                   <div className="h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
                 ) : (
                   <LogIn className="h-4 w-4 mr-2" />

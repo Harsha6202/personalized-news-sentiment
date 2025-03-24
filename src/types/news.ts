@@ -24,6 +24,7 @@ export interface User {
   email: string;
   name?: string;
   preferences: UserPreferences;
+  isEmailVerified: boolean; // Added email verification status
 }
 
 export interface UserPreferences {
@@ -42,4 +43,26 @@ export interface DashboardStats {
     neutral: number;
     negative: number;
   };
+}
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  user: User | null;
+  token: string | null;
+  loading: boolean;
+  error: string | null;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterCredentials extends LoginCredentials {
+  name: string;
+}
+
+// Hasura GraphQL action response types
+export interface HasuraActionResponse<T> {
+  data: T;
 }
